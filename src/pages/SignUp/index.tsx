@@ -14,6 +14,8 @@ import { Form } from '@unform/mobile';
 import * as Yup from 'yup';
 import Icon from 'react-native-vector-icons/Feather';
 
+import api from '../../services/api';
+
 import getValidationErrors from '../../utils/getValidationErrors';
 
 import Input from '../../components/Input';
@@ -56,10 +58,16 @@ const SignUp: React.FC = () => {
       });
 
       // request user creation API
-      // await api.post('/users', data);
+      await api.post('/users', data);
 
-      // TODO redirect to login page and show success toast
-      // history.push('/');
+      // Successful Alert
+      Alert.alert(
+        'Cadastro realizado!',
+        'Você já pode fazer seu logon no GoBarber!',
+      );
+
+      // redirect to login page and show success toast
+      navigation.navigate('SignIn');
     } catch (err) {
       // otherwise, show all errors
       if (err instanceof Yup.ValidationError) {
@@ -70,6 +78,8 @@ const SignUp: React.FC = () => {
 
         return;
       }
+
+      console.log(err);
 
       Alert.alert(
         'Erro no cadastro',
