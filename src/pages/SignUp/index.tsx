@@ -6,12 +6,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/mobile';
-
+import * as Yup from 'yup';
 import Icon from 'react-native-vector-icons/Feather';
+
+import getValidationErrors from '../../utils/getValidationErrors';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -20,6 +23,12 @@ import logoImage from '../../assets/logo.png';
 
 import { Container, Title, BackToSingIn, BackToSingInText } from './styles';
 
+interface SignUpFormData {
+  name: string;
+  email: string;
+  password: string;
+}
+
 const SignUp: React.FC = () => {
   const navigation = useNavigation();
 
@@ -27,8 +36,46 @@ const SignUp: React.FC = () => {
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
-  const handleSignUp = useCallback((data: object) => {
-    console.log(data);
+  const handleSignUp = useCallback(async (data: SignUpFormData) => {
+    try {
+      // start with no errors
+      formRef.current?.setErrors({});
+
+      // format
+      const schema = Yup.object().shape({
+        name: Yup.string().required('Nome obrigatório'),
+        email: Yup.string()
+          .required('E-mail obrigatório')
+          .email('Digite um e-mail válido'),
+        password: Yup.string().min(6, 'No mínimo 6 dígitos'),
+      });
+
+      // do validation
+      await schema.validate(data, {
+        abortEarly: false,
+      });
+
+      // request user creation API
+      // await api.post('/users', data);
+
+      // TODO redirect to login page and show success toast
+      // history.push('/');
+    } catch (err) {
+      // otherwise, show all errors
+      if (err instanceof Yup.ValidationError) {
+        const validationErrors = getValidationErrors(err);
+        formRef.current?.setErrors(validationErrors);
+
+        console.log(err);
+
+        return;
+      }
+
+      Alert.alert(
+        'Erro no cadastro',
+        'Ocorreu erro no cadastro. Tente novamente.',
+      );
+    }
   }, []);
 
   return (

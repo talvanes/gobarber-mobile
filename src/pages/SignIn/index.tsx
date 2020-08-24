@@ -6,12 +6,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/mobile';
-
+import * as Yup from 'yup';
 import Icon from 'react-native-vector-icons/Feather';
+
+import getValidationErrors from '../../utils/getValidationErrors';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -27,14 +30,61 @@ import {
   CreateAccountButtonText,
 } from './styles';
 
+interface SignInFormData {
+  email: string;
+  password: string;
+}
+
 const SignIn: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
   const navigation = useNavigation();
 
-  const handleSignIn = useCallback((data: object) => {
-    console.log(data);
+  const handleSignIn = useCallback(async (data: SignInFormData) => {
+    try {
+      // start with no errors
+      formRef.current?.setErrors({});
+
+      // format
+      const schema = Yup.object().shape({
+        email: Yup.string()
+          .required('E-mail obrigatório')
+          .email('Digite um e-mail válido'),
+        password: Yup.string().required('Senha obrigatória'),
+      });
+
+      // do validation
+      await schema.validate(data, {
+        abortEarly: false,
+      });
+
+      // and sign in
+      /* await signIn({
+        email: data.email,
+        password: data.password,
+      }); */
+
+      // head for dashboard
+      // history.push('/dashboard');
+    } catch (err) {
+      // otherwise, show all errors
+      if (err instanceof Yup.ValidationError) {
+        // validation errors
+        const validationErrors = getValidationErrors(err);
+        formRef.current?.setErrors(validationErrors);
+
+        console.log(err);
+
+        return;
+      }
+
+      // TODO add alert
+      Alert.alert(
+        'Erro na autenticação',
+        'Ocorreu um erro ao fazer login. Verifique as credenciais.',
+      );
+    }
   }, []);
 
   return (
