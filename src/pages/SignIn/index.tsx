@@ -16,6 +16,8 @@ import Icon from 'react-native-vector-icons/Feather';
 
 import getValidationErrors from '../../utils/getValidationErrors';
 
+import { useAuth } from '../../hooks/auth';
+
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
@@ -41,51 +43,56 @@ const SignIn: React.FC = () => {
 
   const navigation = useNavigation();
 
-  const handleSignIn = useCallback(async (data: SignInFormData) => {
-    try {
-      // start with no errors
-      formRef.current?.setErrors({});
+  const { signIn, user } = useAuth();
 
-      // format
-      const schema = Yup.object().shape({
-        email: Yup.string()
-          .required('E-mail obrigatório')
-          .email('Digite um e-mail válido'),
-        password: Yup.string().required('Senha obrigatória'),
-      });
+  const handleSignIn = useCallback(
+    async (data: SignInFormData) => {
+      try {
+        // start with no errors
+        formRef.current?.setErrors({});
 
-      // do validation
-      await schema.validate(data, {
-        abortEarly: false,
-      });
+        // format
+        const schema = Yup.object().shape({
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('Digite um e-mail válido'),
+          password: Yup.string().required('Senha obrigatória'),
+        });
 
-      // and sign in
-      /* await signIn({
-        email: data.email,
-        password: data.password,
-      }); */
+        // do validation
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      // head for dashboard
-      // history.push('/dashboard');
-    } catch (err) {
-      // otherwise, show all errors
-      if (err instanceof Yup.ValidationError) {
-        // validation errors
-        const validationErrors = getValidationErrors(err);
-        formRef.current?.setErrors(validationErrors);
+        // and sign in
+        await signIn({
+          email: data.email,
+          password: data.password,
+        });
 
-        console.log(err);
+        // head for dashboard
+        // history.push('/dashboard');
+      } catch (err) {
+        // otherwise, show all errors
+        if (err instanceof Yup.ValidationError) {
+          // validation errors
+          const validationErrors = getValidationErrors(err);
+          formRef.current?.setErrors(validationErrors);
 
-        return;
+          console.log(err);
+
+          return;
+        }
+
+        // add alert
+        Alert.alert(
+          'Erro na autenticação',
+          'Ocorreu um erro ao fazer login. Verifique as credenciais.',
+        );
       }
-
-      // TODO add alert
-      Alert.alert(
-        'Erro na autenticação',
-        'Ocorreu um erro ao fazer login. Verifique as credenciais.',
-      );
-    }
-  }, []);
+    },
+    [signIn],
+  );
 
   return (
     <>
