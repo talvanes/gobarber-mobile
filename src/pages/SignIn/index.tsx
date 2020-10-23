@@ -84,6 +84,8 @@ const SignIn: React.FC = () => {
           return;
         }
 
+        console.error(err);
+
         // add alert
         Alert.alert(
           'Erro na autenticação',
